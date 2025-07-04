@@ -11,9 +11,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+
+import { FaGoogle, FaGithub } from "react-icons/fa";
+
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -24,10 +28,10 @@ const formSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-}) ;
+});
 
 export const SignUpView = () => {
-    const router = useRouter();
+  const router = useRouter();
     const [error, setError] = useState<string | null>(null);
 
     const [pending, setPending] = useState(false);
@@ -50,11 +54,34 @@ export const SignUpView = () => {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                callbackURL: "/"
             },
             {
                 onSuccess: () => {
                     setPending(false);
                     router.push("/");
+                },
+                onError: ({ error }) => {
+                    setError(error.message);
+
+                }
+            }
+        );
+
+    };
+
+    const onSocial = (provider: "google" | "github") => {
+        setError(null);
+        setPending(true);
+
+        authClient.signIn.social(
+            {
+                provider: provider,
+                callbackURL: "/"
+            },
+            {
+                onSuccess: () => {
+                    setPending(false);
                 },
                 onError: ({ error }) => {
                     setError(error.message);
@@ -74,7 +101,7 @@ export const SignUpView = () => {
                             <div className="flex flex-col gap-6">
                                 <div className="flex flex-col items-center text-center">
                                     <h1 className="text-2xl font-bold">
-                                    Let&apos;s get started
+                                        Let&apos;s get started
                                     </h1>
                                     <p className="text-muted-foreground text-balance">
                                         Create your account
@@ -156,34 +183,42 @@ export const SignUpView = () => {
                                         <AlertTitle>{error}</AlertTitle>
                                     </Alert>
                                 )}
-                                <Button className="w-full" type="submit" disabled={pending}>
+                                <Button
+                                    className="w-full"
+                                    type="submit"
+                                    disabled={pending}
+                                >
                                     Sign In
                                 </Button>
                                 <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-0.5 after:z-0 after:flex after:items-center after:border-t">
                                     <span className="bg-card text-muted-foreground relative z-10 px-2">
                                         Or continue with
                                     </span>
-                                    <div className="grid grid-col-2 gap-4">
-                                        <Button
-                                            variant="outline"
-                                            type="button"
-                                            className="w-full"
-                                        >
-                                            Google
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            type="button"
-                                            className="w-full"
-                                        >
-                                            GitHub
-                                        </Button>
-                                    </div>
-                                    </div>
-                                    <div className="text-center text-sm relative">Already have an account?{" "}
-                                        <Link href="/sign-in" className="underline underline-offset-4">
-                                            Sign In
-                                        </Link> 
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Button
+                                        disabled={pending}
+                                        onClick={() => onSocial("google")}
+                                        variant="outline"
+                                        type="button"
+                                        className="w-full"
+                                    >
+                                        <FaGoogle />
+                                    </Button>
+                                    <Button
+                                        disabled={pending}
+                                        onClick={() => onSocial("github")}
+                                        variant="outline"
+                                        type="button"
+                                        className="w-full"
+                                    >
+                                       <FaGithub />
+                                    </Button>
+                                </div>
+                                <div className="text-center text-sm relative">Already have an account?{" "}
+                                    <Link href="/sign-in" className="underline underline-offset-4">
+                                        Sign In
+                                    </Link>
                                 </div>
                             </div>
                         </form>
@@ -196,10 +231,10 @@ export const SignUpView = () => {
 
                     </div>
                 </CardContent>
-            </Card>
+            </Card >
             <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline-offset-4">
                 By clicking continue, you agree to our <Link href="/terms" className="underline underline-offset-4">Terms of Service</Link> and <Link href="/privacy" className="underline underline-offset-4">Privacy Policy</Link>.
             </div>
-        </div>
+        </div >
     );
 };
